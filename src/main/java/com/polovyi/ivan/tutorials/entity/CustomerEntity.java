@@ -12,7 +12,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document("customer")
+@Document("customers")
 public class CustomerEntity {
 
     @Id

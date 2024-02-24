@@ -1,75 +1,160 @@
+#version: "3.8"
+#
+#services:
+#
+#  temp-instance:
+#    container_name: temp-instance
+#    image: mongo:5.0.5
+#    volumes:
+#      - ./init-mongo-db:/docker-entrypoint-initdb.d
+#    networks:
+#      - mongo-cluster-network
+#
+#  primary:
+#    container_name: primary
+#    image: mongo:5.0.5
+#    volumes:
+#      - ./keys/mongo-replica-set.key:/data/db/mongo-replica-set.key
+#    ports:
+#      - "27017:27017"
+#    environment:
+#          - MONGO_INITDB_ROOT_USERNAME=root
+#          - MONGO_INITDB_ROOT_PASSWORD=root
+#    networks:
+#      mongo-cluster-network:
+#          ipv4_address: 172.16.238.10
+#    command:
+#      - "--replSet"
+#      - "tutorial-cluster"
+#      - "--keyFile"
+#      - "/data/db/mongo-replica-set.key"
+#      - "--profile=1"
+#      - "--slowms=1"
+#
+#  replica01:
+#    container_name: replica01
+#    image: mongo:5.0.5
+#    volumes:
+#      - ./keys/mongo-replica-set.key:/data/db/mongo-replica-set.key
+#    ports:
+#      - "27027:27017"
+#    networks:
+#      mongo-cluster-network:
+#        ipv4_address: 172.16.238.11
+#    command:
+#      - "--replSet"
+#      - "tutorial-cluster"
+#      - "--keyFile"
+#      - "/data/db/mongo-replica-set.key"
+#      - "--profile=1"
+#      - "--slowms=1"
+#
+#  replica02:
+#    container_name: replica02
+#    image: mongo:5.0.5
+#    volumes:
+#      - ./keys/mongo-replica-set.key:/data/db/mongo-replica-set.key
+#    ports:
+#      - "27037:27017"
+#    networks:
+#      mongo-cluster-network:
+#        ipv4_address: 172.16.238.12
+#    command:
+#      - "--replSet"
+#      - "tutorial-cluster"
+#      - "--keyFile"
+#      - "/data/db/mongo-replica-set.key"
+#      - "--profile=1"
+#      - "--slowms=1"
+#
+#networks:
+#  mongo-cluster-network:
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 172.16.238.0/24
+
 version: "3.8"
 
 services:
 
   temp-instance:
     container_name: temp-instance
-    image: mongo:5.0.5
+    image: mongo:7.0
     volumes:
       - ./init-mongo-db:/docker-entrypoint-initdb.d
     networks:
-      - mongo-cluster-network
+      - mongo-cluster
 
-  primary:
-    container_name: primary
-    image: mongo:5.0.5
-    volumes:
-      - ./keys/mongo-replica-set.key:/data/db/mongo-replica-set.key
+  mongo1:
+    container_name: mongo1
+    image: mongo:7.0
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017", "--keyFile", "/etc/mongodb/pki/keyfile"]
+    restart: always
     ports:
       - "27017:27017"
+    networks:
+      mongo-cluster:
+        ipv4_address: 172.16.238.10
+    volumes:
+      - ./keys/rs_keyfile:/etc/mongodb/pki/keyfile
+      - "mongo1_data:/data/db"
+      - "mongo1_config:/data/configdb"
     environment:
-          - MONGO_INITDB_ROOT_USERNAME=root
-          - MONGO_INITDB_ROOT_PASSWORD=root
-    networks:
-      mongo-cluster-network:
-          ipv4_address: 172.16.238.10
-    command:
-      - "--replSet"
-      - "tutorial-cluster"
-      - "--keyFile"
-      - "/data/db/mongo-replica-set.key"
-      - "--profile=1"
-      - "--slowms=1"
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
 
-  replica01:
-    container_name: replica01
-    image: mongo:5.0.5
-    volumes:
-      - ./keys/mongo-replica-set.key:/data/db/mongo-replica-set.key
+
+
+  mongo2:
+    image: mongo:7.0
+    container_name: mongo2
+    command: ["--replSet", "rs0" ,"--bind_ip_all", "--port", "27018","--keyFile", "/etc/mongodb/pki/keyfile"]
+    restart: always
     ports:
-      - "27027:27017"
+      - "27018:27018"
     networks:
-      mongo-cluster-network:
+      mongo-cluster:
         ipv4_address: 172.16.238.11
-    command:
-      - "--replSet"
-      - "tutorial-cluster"
-      - "--keyFile"
-      - "/data/db/mongo-replica-set.key"
-      - "--profile=1"
-      - "--slowms=1"
-
-  replica02:
-    container_name: replica02
-    image: mongo:5.0.5
     volumes:
-      - ./keys/mongo-replica-set.key:/data/db/mongo-replica-set.key
+      - ./keys/rs_keyfile:/etc/mongodb/pki/keyfile
+      - "mongo2_data:/data/db"
+      - "mongo2_config:/data/configdb"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+
+
+  mongo3:
+    image: mongo:7.0
+    container_name: mongo3
+    command: ["--replSet", "rs0" ,"--bind_ip_all", "--port", "27019","--keyFile", "/etc/mongodb/pki/keyfile"]
+    restart: always
     ports:
-      - "27037:27017"
+      - "27019:27019"
     networks:
-      mongo-cluster-network:
+      mongo-cluster:
         ipv4_address: 172.16.238.12
-    command:
-      - "--replSet"
-      - "tutorial-cluster"
-      - "--keyFile"
-      - "/data/db/mongo-replica-set.key"
-      - "--profile=1"
-      - "--slowms=1"
+    volumes:
+      - ./keys/rs_keyfile:/etc/mongodb/pki/keyfile
+      - "mongo3_data:/data/db"
+      - "mongo3_config:/data/configdb"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+
+volumes:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  mongo1_config:
+  mongo2_config:
+  mongo3_config:
 
 networks:
-  mongo-cluster-network:
+  mongo-cluster:
     ipam:
-      driver: default
       config:
         - subnet: 172.16.238.0/24
+
